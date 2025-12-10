@@ -1,70 +1,134 @@
-# Getting Started with Create React App
+# Book Store Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack book store application built with React (frontend) and Node.js + Express (backend).
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- 📚 Browse and search books
+- ❤️ Add/remove books to favorites
+- 🔍 View detailed book information
+- 💾 Persistent favorites storage (MongoDB)
+- 🎨 Modern, responsive UI
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Frontend
+- React 18
+- Redux Toolkit (state management)
+- React Router (routing)
+- Axios (HTTP client)
+- Tailwind CSS (styling)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Backend
+- Node.js
+- Express.js
+- MongoDB (with Mongoose)
+- CORS enabled
 
-### `npm test`
+## Project Structure
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+book-store/
+├── backend/              # Express.js backend
+│   ├── models/          # MongoDB models
+│   ├── routes/          # API routes
+│   ├── server.js        # Express server
+│   └── package.json
+├── src/                 # React frontend
+│   ├── components/     # React components
+│   ├── slice/          # Redux slices
+│   ├── utils/          # Utility functions
+│   └── ...
+└── package.json
+```
 
-### `npm run build`
+## Setup Instructions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB (local or MongoDB Atlas account)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend Setup
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Navigate to backend directory:
+```bash
+cd backend
+```
 
-### `npm run eject`
+2. Install dependencies:
+```bash
+npm install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. Create `.env` file:
+```bash
+cp .env.example .env
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4. Update `.env` with your MongoDB connection:
+   - Local: `mongodb://localhost:27017/bookstore`
+   - Atlas: Your MongoDB Atlas connection string
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+5. Start MongoDB (if using local):
+   - Make sure MongoDB is running on your system
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+6. Seed the database (optional):
+   - Start the server first, then:
+   ```bash
+   curl -X POST http://localhost:5000/api/books/seed
+   ```
 
-## Learn More
+7. Start the backend server:
+```bash
+# Development mode (with auto-reload)
+npm run dev
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Production mode
+npm start
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The backend will run on `http://localhost:5000`
 
-### Code Splitting
+### Frontend Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Install dependencies (from root directory):
+```bash
+npm install
+```
 
-### Analyzing the Bundle Size
+2. Create `.env` file in root (optional):
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+3. Start the development server:
+```bash
+npm start
+```
 
-### Making a Progressive Web App
+The frontend will run on `http://localhost:3000`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## API Endpoints
 
-### Advanced Configuration
+### Books
+- `GET /api/books` - Get all books
+- `GET /api/books/:id` - Get single book
+- `GET /api/books/search/:query` - Search books
+- `POST /api/books/seed` - Seed database with books
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Favorites
+- `GET /api/favorites` - Get all favorites
+- `POST /api/favorites` - Add to favorites
+- `DELETE /api/favorites/:bookId` - Remove from favorites
 
-### Deployment
+## Development
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- Backend runs on port 5000
+- Frontend runs on port 3000
+- Make sure both servers are running for full functionality
 
-### `npm run build` fails to minify
+## Notes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- The app uses Redux for local state management and syncs with the backend
+- Favorites are stored in MongoDB and persist across sessions
+- If the backend is unavailable, the frontend falls back to the external API
