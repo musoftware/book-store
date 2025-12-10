@@ -1,45 +1,53 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const bookSchema = new mongoose.Schema({
+const Book = sequelize.define('Book', {
   id: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    allowNull: false,
     unique: true,
   },
   title: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   authors: {
-    type: String,
-    default: 'Unknown',
+    type: DataTypes.STRING,
+    defaultValue: 'Unknown',
   },
   description: {
-    type: String,
-    default: '',
+    type: DataTypes.TEXT,
+    defaultValue: '',
   },
   image_url: {
-    type: String,
-    default: '',
+    type: DataTypes.STRING(500),
+    defaultValue: '',
   },
   rating: {
-    type: Number,
-    default: 0,
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 0,
   },
   num_pages: {
-    type: Number,
-    default: 0,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   formats: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {},
+    type: DataTypes.JSON,
+    defaultValue: {},
   },
 }, {
+  tableName: 'books',
   timestamps: true,
+  underscored: true,
+  indexes: [
+    {
+      fields: ['title'],
+    },
+    {
+      fields: ['authors'],
+    },
+  ],
 });
 
-// Index for faster queries
-bookSchema.index({ title: 'text', authors: 'text' });
-
-module.exports = mongoose.model('Book', bookSchema);
-
+module.exports = Book;

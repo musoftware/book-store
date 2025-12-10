@@ -1,6 +1,6 @@
 # Book Store Backend API
 
-Express.js backend for the Book Store application.
+Express.js backend for the Book Store application using MySQL and Sequelize.
 
 ## Setup
 
@@ -14,30 +14,35 @@ npm install
 cp .env.example .env
 ```
 
-3. Update `.env` with your MongoDB connection string:
-   - For local MongoDB: `mongodb://localhost:27017/bookstore`
-   - For MongoDB Atlas: Use your cloud connection string
+3. Set up MySQL database:
+   - Install MySQL on your system (or use a cloud MySQL service)
+   - Create a database named `bookstore` (or update DB_NAME in `.env`)
+   ```sql
+   CREATE DATABASE bookstore;
+   ```
 
-4. Start MongoDB (if using local):
-   - Make sure MongoDB is installed and running
-   - Or use MongoDB Atlas (cloud) and update the connection string
+4. Update `.env` with your MySQL credentials:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_NAME=bookstore
+   DB_USER=root
+   DB_PASSWORD=your-password
+   ```
 
-5. Seed the database with books:
-```bash
-# Start the server first
-npm run dev
-
-# Then in another terminal, seed the books:
-curl -X POST http://localhost:5000/api/books/seed
-```
-
-6. Start the server:
+5. Start the server (tables will be created automatically):
 ```bash
 # Development mode (with auto-reload)
 npm run dev
 
 # Production mode
 npm start
+```
+
+6. Seed the database with books:
+```bash
+# In another terminal or use Postman/curl:
+curl -X POST http://localhost:5000/api/books/seed
 ```
 
 ## API Endpoints

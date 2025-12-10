@@ -22,7 +22,7 @@ A full-stack book store application built with React (frontend) and Node.js + Ex
 ### Backend
 - Node.js
 - Express.js
-- MongoDB (with Mongoose)
+- MySQL (with Sequelize ORM)
 - CORS enabled
 
 ## Project Structure
@@ -46,7 +46,7 @@ book-store/
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- MongoDB (local or MongoDB Atlas account)
+- MySQL (local installation or cloud MySQL service)
 
 ### Backend Setup
 
@@ -65,20 +65,21 @@ npm install
 cp .env.example .env
 ```
 
-4. Update `.env` with your MongoDB connection:
-   - Local: `mongodb://localhost:27017/bookstore`
-   - Atlas: Your MongoDB Atlas connection string
-
-5. Start MongoDB (if using local):
-   - Make sure MongoDB is running on your system
-
-6. Seed the database (optional):
-   - Start the server first, then:
-   ```bash
-   curl -X POST http://localhost:5000/api/books/seed
+4. Create MySQL database:
+   ```sql
+   CREATE DATABASE bookstore;
    ```
 
-7. Start the backend server:
+5. Update `.env` with your MySQL credentials:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_NAME=bookstore
+   DB_USER=root
+   DB_PASSWORD=your-password
+   ```
+
+6. Start the backend server (tables will be created automatically):
 ```bash
 # Development mode (with auto-reload)
 npm run dev
@@ -88,6 +89,11 @@ npm start
 ```
 
 The backend will run on `http://localhost:5000`
+
+7. Seed the database (optional):
+   ```bash
+   curl -X POST http://localhost:5000/api/books/seed
+   ```
 
 ### Frontend Setup
 
@@ -130,5 +136,6 @@ The frontend will run on `http://localhost:3000`
 ## Notes
 
 - The app uses Redux for local state management and syncs with the backend
-- Favorites are stored in MongoDB and persist across sessions
+- Favorites are stored in MySQL and persist across sessions
+- Database tables are created automatically on first run
 - If the backend is unavailable, the frontend falls back to the external API

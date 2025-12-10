@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const Book = require('../models/Book');
 const axios = require('axios');
 
@@ -9,23 +10,30 @@ router.post('/seed', async (req, res) => {
     const response = await axios.get('https://example-data.draftbit.com/books?_limit=100');
     const books = response.data;
 
-    // Insert books, skip duplicates
-    const results = await Book.insertMany(books, { ordered: false });
+    // Insert books, skip duplicates using findOrCreate
+    let created = 0;
+    let skipped = 0;
+
+    for (const book of books) {
+      const [, wasCreated] = await Book.findOrCreate({
+        where: { id: book.id },
+        defaults: book,
+      });
+      if (wasCreated) {
+        created++;
+      } else {
+        skipped++;
+      }
+    }
     
     res.json({
-      message: `Successfully seeded ${results.length} books`,
-      total: results.length,
+      message: `Seeding completed`,
+      created,
+      skipped,
+      total: books.length,
     });
   } catch (error) {
-    if (error.code === 11000) {
-      // Duplicate key error - some books already exist
-      res.json({
-        message: 'Some books already exist in database',
-        error: error.message,
-      });
-    } else {
-      res.status(500).json({ error: error.message });
-    }
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -34,22 +42,21 @@ router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 100;
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const books = await Book.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Book.countDocuments();
+    const { count, rows: books } = await Book.findAndCountAll({
+      order: [['created_at', 'DESC']],
+      limit,
+      offset,
+    });
 
     res.json({
       data: books,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit),
+        total: count,
+        pages: Math.ceil(count / limit),
       },
     });
   } catch (error) {
@@ -60,7 +67,9 @@ router.get('/', async (req, res) => {
 // Get single book by ID
 router.get('/:id', async (req, res) => {
   try {
-    const book = await Book.findOne({ id: parseInt(req.params.id) });
+    const book = await Book.findOne({ 
+      where: { id: parseInt(req.params.id) }
+    });
     
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
@@ -76,12 +85,15 @@ router.get('/:id', async (req, res) => {
 router.get('/search/:query', async (req, res) => {
   try {
     const query = req.params.query;
-    const books = await Book.find({
-      $or: [
-        { title: { $regex: query, $options: 'i' } },
-        { authors: { $regex: query, $options: 'i' } },
-      ],
-    }).limit(50);
+    const books = await Book.findAll({
+      where: {
+        [Op.or]: [
+          { title: { [Op.like]: `%${query}%` } },
+          { authors: { [Op.like]: `%${query}%` } },
+        ],
+      },
+      limit: 50,
+    });
 
     res.json({ data: books, count: books.length });
   } catch (error) {
@@ -92,11 +104,10 @@ router.get('/search/:query', async (req, res) => {
 // Create a new book
 router.post('/', async (req, res) => {
   try {
-    const book = new Book(req.body);
-    await book.save();
+    const book = await Book.create(req.body);
     res.status(201).json(book);
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
       res.status(400).json({ error: 'Book with this ID already exists' });
     } else {
       res.status(500).json({ error: error.message });
@@ -107,15 +118,18 @@ router.post('/', async (req, res) => {
 // Update a book
 router.put('/:id', async (req, res) => {
   try {
-    const book = await Book.findOneAndUpdate(
-      { id: parseInt(req.params.id) },
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const [updated] = await Book.update(req.body, {
+      where: { id: parseInt(req.params.id) },
+      returning: true,
+    });
 
-    if (!book) {
+    if (updated === 0) {
       return res.status(404).json({ error: 'Book not found' });
     }
+
+    const book = await Book.findOne({ 
+      where: { id: parseInt(req.params.id) }
+    });
 
     res.json(book);
   } catch (error) {
@@ -126,12 +140,15 @@ router.put('/:id', async (req, res) => {
 // Delete a book
 router.delete('/:id', async (req, res) => {
   try {
-    const book = await Book.findOneAndDelete({ id: parseInt(req.params.id) });
+    const book = await Book.findOne({ 
+      where: { id: parseInt(req.params.id) }
+    });
 
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
 
+    await book.destroy();
     res.json({ message: 'Book deleted successfully', book });
   } catch (error) {
     res.status(500).json({ error: error.message });

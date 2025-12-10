@@ -7,7 +7,10 @@ const Book = require('../models/Book');
 router.get('/', async (req, res) => {
   try {
     const userId = req.query.userId || 'default-user';
-    const favorites = await Favorite.find({ userId }).sort({ createdAt: -1 });
+    const favorites = await Favorite.findAll({
+      where: { userId },
+      order: [['created_at', 'DESC']],
+    });
     
     res.json({
       data: favorites.map(fav => fav.book),
@@ -24,7 +27,9 @@ router.get('/check/:bookId', async (req, res) => {
     const userId = req.query.userId || 'default-user';
     const bookId = parseInt(req.params.bookId);
     
-    const favorite = await Favorite.findOne({ userId, bookId });
+    const favorite = await Favorite.findOne({ 
+      where: { userId, bookId }
+    });
     
     res.json({ isFavorited: !!favorite });
   } catch (error) {
@@ -45,29 +50,30 @@ router.post('/', async (req, res) => {
     // Check if book exists in database, if not, use the provided book data
     let bookData = req.body.book;
     if (!bookData) {
-      const book = await Book.findOne({ id: bookId });
+      const book = await Book.findOne({ where: { id: bookId } });
       if (!book) {
         return res.status(404).json({ error: 'Book not found' });
       }
-      bookData = book.toObject();
+      bookData = book.toJSON();
     }
 
     // Check if already favorited
-    const existingFavorite = await Favorite.findOne({ userId, bookId });
+    const existingFavorite = await Favorite.findOne({ 
+      where: { userId, bookId }
+    });
     if (existingFavorite) {
       return res.status(400).json({ error: 'Book already in favorites' });
     }
 
-    const favorite = new Favorite({
+    const favorite = await Favorite.create({
       userId,
       bookId,
       book: bookData,
     });
 
-    await favorite.save();
     res.status(201).json({ message: 'Book added to favorites', favorite });
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
       res.status(400).json({ error: 'Book already in favorites' });
     } else {
       res.status(500).json({ error: error.message });
@@ -81,12 +87,15 @@ router.delete('/:bookId', async (req, res) => {
     const userId = req.query.userId || 'default-user';
     const bookId = parseInt(req.params.bookId);
 
-    const favorite = await Favorite.findOneAndDelete({ userId, bookId });
+    const favorite = await Favorite.findOne({ 
+      where: { userId, bookId }
+    });
 
     if (!favorite) {
       return res.status(404).json({ error: 'Favorite not found' });
     }
 
+    await favorite.destroy();
     res.json({ message: 'Book removed from favorites', favorite });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -97,11 +106,13 @@ router.delete('/:bookId', async (req, res) => {
 router.delete('/', async (req, res) => {
   try {
     const userId = req.query.userId || 'default-user';
-    const result = await Favorite.deleteMany({ userId });
+    const deletedCount = await Favorite.destroy({ 
+      where: { userId }
+    });
 
     res.json({
       message: 'All favorites cleared',
-      deletedCount: result.deletedCount,
+      deletedCount,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

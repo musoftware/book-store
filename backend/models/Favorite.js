@@ -1,25 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const favoriteSchema = new mongoose.Schema({
+const Favorite = sequelize.define('Favorite', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   userId: {
-    type: String,
-    required: true,
-    default: 'default-user', // For now, using default user. Can be extended for multi-user
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'default-user',
   },
   bookId: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   book: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
+    type: DataTypes.JSON,
+    allowNull: false,
   },
 }, {
+  tableName: 'favorites',
   timestamps: true,
+  underscored: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['userId', 'bookId'],
+      name: 'unique_user_book'
+    },
+  ],
 });
 
-// Ensure one user can't favorite the same book twice
-favoriteSchema.index({ userId: 1, bookId: 1 }, { unique: true });
-
-module.exports = mongoose.model('Favorite', favoriteSchema);
-
+module.exports = Favorite;
